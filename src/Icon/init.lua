@@ -22,6 +22,12 @@ if not referenceObject then
     TopbarPlusReference.addToReplicatedStorage()
 end
 local Icon = {}
+
+for _,s in ipairs(script:GetChildren()) do
+    if not s:IsA("ModuleScript") then continue end
+    Icon[s.Name] = s
+end
+
 Icon.__index = Icon
 local IconController = require(iconModule.IconController)
 local Signal = require(iconModule.Signal)

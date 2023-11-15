@@ -66,18 +66,10 @@ local alignmentDetails = {}
 alignmentDetails["left"] = {
 	startScale = 0,
 	getOffset = function()
-		local offset = 48 + IconController.leftOffset
+		local offset = IconController.leftOffset
 		if checkTopbarEnabled() then
-			local chatEnabled = starterGui:GetCoreGuiEnabled("Chat")
-			if chatEnabled then
-				offset += 12 + 32
-			end
 			if voiceChatIsEnabledForUserAndWithinExperience and not isStudio then
-				if chatEnabled then
-					offset += 67
-				else
-					offset += 43
-				end
+				offset += 43
 			end
 		end
 		return offset

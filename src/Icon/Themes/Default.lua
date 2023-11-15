@@ -45,7 +45,7 @@ return {
             iconImage = "",
             iconImageColor =Color3.fromRGB(255, 255, 255),
             iconImageTransparency = 0,
-            iconImageYScale = 0.63,
+            iconImageYScale = 24/44, -- Roughly matches Roblox's icon scale
             iconImageRatio = 1,
             iconLabelYScale = 0.45,
             iconScale = UDim2.new(1, 0, 1, 0),

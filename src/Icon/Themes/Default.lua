@@ -38,8 +38,8 @@ return {
         -- How items appear normally (i.e. when they're 'deselected')
         deselected = {
             iconBackgroundColor = Color3.fromRGB(0, 0, 0),
-            iconBackgroundTransparency = 0.5,
-            iconCornerRadius = UDim.new(0.25, 0),
+            iconBackgroundTransparency = 0.3,
+            iconCornerRadius = UDim.new(1, 0),
             iconGradientColor = ColorSequence.new(Color3.fromRGB(255, 255, 255)),
             iconGradientRotation = 0,
             iconImage = "",
@@ -49,9 +49,9 @@ return {
             iconImageRatio = 1,
             iconLabelYScale = 0.45,
             iconScale = UDim2.new(1, 0, 1, 0),
-            forcedIconSizeX = 32;
-            forcedIconSizeY = 32;
-            iconSize = UDim2.new(0, 32, 0, 32),
+            forcedIconSizeX = 44;
+            forcedIconSizeY = 44;
+            iconSize = UDim2.new(0, 44, 0, 44),
             iconOffset = UDim2.new(0, 0, 0, 0),
             iconText = "",
             iconTextColor = Color3.fromRGB(255, 255, 255),

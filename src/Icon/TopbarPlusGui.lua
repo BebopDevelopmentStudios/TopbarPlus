@@ -4,6 +4,7 @@ topbarPlusGui.Enabled = true
 topbarPlusGui.DisplayOrder = 0
 topbarPlusGui.IgnoreGuiInset = true
 topbarPlusGui.ResetOnSpawn = false
+topbarPlusGui.ScreenInsets = Enum.ScreenInsets.TopbarSafeInsets
 topbarPlusGui.Name = "TopbarPlus"
 
 local activeItems = Instance.new("Folder")
@@ -14,7 +15,7 @@ local topbarContainer = Instance.new("Frame")
 topbarContainer.BackgroundTransparency = 1
 topbarContainer.Name = "TopbarContainer"
 topbarContainer.Position = UDim2.new(0, 0, 0, 0)
-topbarContainer.Size = UDim2.new(1, 0, 0, 36)
+topbarContainer.Size = UDim2.fromScale(1, 1)
 topbarContainer.Visible = true
 topbarContainer.ZIndex = 1
 topbarContainer.Parent = topbarPlusGui
@@ -23,7 +24,7 @@ topbarContainer.Active = false
 local iconContainer = Instance.new("Frame")
 iconContainer.BackgroundTransparency = 1
 iconContainer.Name = "IconContainer"
-iconContainer.Position = UDim2.new(0, 104, 0, 4)
+iconContainer.Position = UDim2.fromScale(0, 0)
 iconContainer.Visible = false
 iconContainer.ZIndex = 1
 iconContainer.Parent = topbarContainer
@@ -212,7 +213,7 @@ tipFrame.Active = false
 
 local tipCorner = Instance.new("UICorner")
 tipCorner.Name = "TipCorner"
-tipCorner.CornerRadius = UDim.new(0.25,0)
+tipCorner.CornerRadius = UDim.new(.25, 0)
 tipCorner.Parent = tipFrame
 
 local tipLabel = Instance.new("TextLabel")

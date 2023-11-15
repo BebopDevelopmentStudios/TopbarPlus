@@ -1627,11 +1627,12 @@ function Icon:displayTip(bool)
 		-- When the user moves their cursor/finger, update tip to match the position
 		local function updateTipPositon(x, y)
 			local newX = x
+			local guiInset = guiService.TopbarInset
+			newX = newX - guiInset.Min.X
 			local newY = y
 			local camera = workspace.CurrentCamera
 			local viewportSize = camera and camera.ViewportSize
 			if userInputService.TouchEnabled then
-				--tipFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 				local desiredX = newX - tipFrame.Size.X.Offset/2
 				local minX = 0
 				local maxX = viewportSize.X - tipFrame.Size.X.Offset

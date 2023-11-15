@@ -10,17 +10,28 @@ local starterGui = game:GetService("StarterGui")
 local guiService = game:GetService("GuiService")
 local localizationService = game:GetService("LocalizationService")
 local playersService = game:GetService("Players")
+
 local localPlayer = playersService.LocalPlayer
 local iconModule = script
+
+local IconController = require(iconModule.IconController)
+local Signal = require(iconModule.Signal)
+local Maid = require(iconModule.Maid)
+local TopbarPlusGui = require(iconModule.TopbarPlusGui)
+local Themes = require(iconModule.Themes)
+
 local TopbarPlusReference = require(iconModule.TopbarPlusReference)
+
 local referenceObject = TopbarPlusReference.getObject()
 local leadPackage = referenceObject and referenceObject.Value
 if leadPackage and leadPackage ~= iconModule then
 	return require(leadPackage)
 end
+
 if not referenceObject then
     TopbarPlusReference.addToReplicatedStorage()
 end
+
 local Icon = {}
 
 for _,s in ipairs(script:GetChildren()) do
@@ -28,12 +39,11 @@ for _,s in ipairs(script:GetChildren()) do
     Icon[s.Name] = s
 end
 
+function Icon.setVoiceChatEnabled(bool: boolean)
+	IconController.voiceChatEnabled = bool
+end
+
 Icon.__index = Icon
-local IconController = require(iconModule.IconController)
-local Signal = require(iconModule.Signal)
-local Maid = require(iconModule.Maid)
-local TopbarPlusGui = require(iconModule.TopbarPlusGui)
-local Themes = require(iconModule.Themes)
 local activeItems = TopbarPlusGui.ActiveItems
 local topbarContainer = TopbarPlusGui.TopbarContainer
 local iconTemplate = topbarContainer["IconContainer"]
@@ -44,7 +54,7 @@ local DEFAULT_FORCED_GROUP_VALUES = {}
 
 
 -- CONSTRUCTORS
-function Icon.new()
+function Icon.new()	
 	local self = {}
 	setmetatable(self, Icon)
 

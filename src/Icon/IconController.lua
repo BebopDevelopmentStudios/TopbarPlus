@@ -42,7 +42,7 @@ local function checkTopbarEnabled()
 		return starterGui:GetCore("TopbarEnabled")
 	end,function(err)
 		--has not been registered yet, but default is that is enabled
-		return true	
+		return true
 	end)
 	return (success and bool)
 end
@@ -94,7 +94,7 @@ alignmentDetails["mid"] = {
 	getOffset = function()
 		return 0
 	end,
-	getStartOffset = function(totalIconX) 
+	getStartOffset = function(totalIconX)
 		local alignmentGap = IconController["midGap"]
 		return -totalIconX/2 + (alignmentGap/2)
 	end,
@@ -291,7 +291,7 @@ function IconController.updateTopbar()
 		topbarUpdating = true
 		runService.Heartbeat:Wait()
 		topbarUpdating = false
-		
+
 		for alignment, alignmentInfo in pairs(alignmentDetails) do
 			alignmentInfo.records = {}
 		end
@@ -374,7 +374,7 @@ function IconController.updateTopbar()
 				local oppositeAlignment = (alignment == "left" and "right") or "left"
 				local oppositeAlignmentInfo = alignmentDetails[oppositeAlignment]
 				local oppositeOverflowIcon = IconController.getIcon("_overflowIcon-"..oppositeAlignment)
-				
+
 				-- This determines whether any icons (from opposite or mid alignment) are overlapping with this alignment
 				local overflowBoundaryX = getBoundaryX(overflowIcon, alignment)
 				if overflowIcon.enabled then
@@ -472,9 +472,9 @@ function IconController.updateTopbar()
 							break
 						end
 					end
-				
+
 				else
-					
+
 					-- This checks to see if the lowest/highest (depending on left/right) ordered overlapping icon is no longer overlapping, removes from the dropdown, and repeats if valid
 					local winningOrder, winningOverlappedIcon
 					local totalOverlappingIcons = #overflowIcon.dropdownIcons
@@ -530,6 +530,7 @@ function IconController.updateTopbar()
 		end
 		return true
 	end)
+	return true
 end
 
 function IconController.setTopbarEnabled(bool, forceBool)
@@ -553,7 +554,7 @@ function IconController.setTopbarEnabled(bool, forceBool)
 				if controllerMenuOverride and controllerMenuOverride.Connected then
 					controllerMenuOverride:Disconnect()
 				end
-				
+
 				if hapticService:IsVibrationSupported(Enum.UserInputType.Gamepad1) and hapticService:IsMotorSupported(Enum.UserInputType.Gamepad1,Enum.VibrationMotor.Small) then
 					hapticService:SetMotor(Enum.UserInputType.Gamepad1,Enum.VibrationMotor.Small,1)
 					delay(0.2,function()
@@ -570,8 +571,8 @@ function IconController.setTopbarEnabled(bool, forceBool)
 					0.1,
 					true
 				)
-				
-				
+
+
 				local selectIcon
 				local targetOffset = 0
 				IconController:_updateSelectionGroup()
@@ -971,7 +972,7 @@ end
 -- BEHAVIOUR
 --Controller support
 coroutine.wrap(function()
-	
+
 	-- Create PC 'Enter Controller Mode' Icon
 	runService.Heartbeat:Wait() -- This is required to prevent an infinite recursion
 	local Icon = require(iconModule)
@@ -1077,9 +1078,9 @@ coroutine.wrap(function()
 		checkVoiceChatManuallyEnabled()
 
 	end)
-	
-	
-	
+
+
+
 
 
 	if not isStudio then

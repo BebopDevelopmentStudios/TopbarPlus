@@ -1,6 +1,6 @@
 [package]
 name = "bebopdevelopmentstudios/topbarplus"
-version = "2.10.0"
+version = "2.11.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 

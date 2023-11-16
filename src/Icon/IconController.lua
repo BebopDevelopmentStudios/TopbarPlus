@@ -7,7 +7,6 @@ local userInputService = game:GetService("UserInputService")
 local tweenService = game:GetService("TweenService")
 local players = game:GetService("Players")
 local VRService = game:GetService("VRService")
-local voiceChatService = game:GetService("VoiceChatService")
 local localizationService = game:GetService("LocalizationService")
 local iconModule = script.Parent
 local TopbarPlusReference = require(iconModule.TopbarPlusReference)
@@ -30,7 +29,6 @@ local cameraConnection
 local controllerMenuOverride
 local isStudio = runService:IsStudio()
 local localPlayer = players.LocalPlayer
-local voiceChatIsEnabledForUserAndWithinExperience = false
 local disableControllerOption = false
 local STUPID_CONTROLLER_OFFSET = 32
 
@@ -67,11 +65,6 @@ alignmentDetails["left"] = {
 	startScale = 0,
 	getOffset = function()
 		local offset = IconController.leftOffset
-		if checkTopbarEnabled() then
-			if voiceChatIsEnabledForUserAndWithinExperience and not isStudio then
-				offset += 43
-			end
-		end
 		return offset
 	end,
 	getStartOffset = function()
@@ -123,7 +116,6 @@ IconController.midGap = 12
 IconController.rightGap = 12
 IconController.leftOffset = 0
 IconController.rightOffset = 0
-IconController.voiceChatEnabled = nil
 IconController.mimicCoreGui = true
 IconController.healthbarDisabled = false
 IconController.activeButtonBCallbacks = 0
@@ -1044,36 +1036,6 @@ coroutine.wrap(function()
 			}
 		end
 	end
-
-
-
-
-
-	-- This checks if voice chat is enabled
-	task.defer(function()
-		local success, enabledForUser
-		while true do
-			success, enabledForUser = pcall(function() return voiceChatService:IsVoiceEnabledForUserIdAsync(localPlayer.UserId) end)
-			if success then
-				break
-			end
-			task.wait(1)
-		end
-		local function checkVoiceChatManuallyEnabled()
-			if IconController.voiceChatEnabled then
-				if success and enabledForUser then
-					voiceChatIsEnabledForUserAndWithinExperience = true
-					IconController.updateTopbar()
-				end
-			end
-		end
-		checkVoiceChatManuallyEnabled()
-
-	end)
-
-
-
-
 
 	if not isStudio then
 		local ownerId = game.CreatorId

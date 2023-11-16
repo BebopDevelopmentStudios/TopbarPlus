@@ -1,5 +1,4 @@
 -- LOCAL
-local LocalizationService = game:GetService("LocalizationService")
 local tweenService = game:GetService("TweenService")
 local debris = game:GetService("Debris")
 local userInputService = game:GetService("UserInputService")
@@ -8,10 +7,7 @@ local runService = game:GetService("RunService")
 local textService = game:GetService("TextService")
 local starterGui = game:GetService("StarterGui")
 local guiService = game:GetService("GuiService")
-local localizationService = game:GetService("LocalizationService")
-local playersService = game:GetService("Players")
 
-local localPlayer = playersService.LocalPlayer
 local iconModule = script
 
 local IconController = require(iconModule.IconController)
@@ -37,10 +33,6 @@ local Icon = {}
 for _,s in ipairs(script:GetChildren()) do
     if not s:IsA("ModuleScript") then continue end
     Icon[s.Name] = s
-end
-
-function Icon.setVoiceChatEnabled(bool: boolean)
-	IconController.voiceChatEnabled = bool
 end
 
 Icon.__index = Icon

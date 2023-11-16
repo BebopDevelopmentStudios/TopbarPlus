@@ -59,12 +59,29 @@ local function bindCamera()
 	cameraConnection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(IconController.updateTopbar)
 end
 
+--[=[
+	Gets the offset for the topbar inset.
+	The topbar on mobile devices is 52px tall, whereas on desktop it's 58px tall, and this difference also applies to spacing and padding.
+]=]
+local function getOffsetForTopbarInset(): number
+	if not IconController.accountForMobile then
+		return 0
+	end
+
+	return guiService.TopbarInset.Max.Y - 52
+end
+
+-- Handles changing of the top bar inset
+local function bindTopBarInsetChanged()
+	guiService:GetPropertyChangedSignal("TopbarInset"):Connect(IconController.updateTopbar)
+end
+
 -- OFFSET HANDLERS
 local alignmentDetails = {}
 alignmentDetails["left"] = {
 	startScale = 0,
 	getOffset = function()
-		local offset = IconController.leftOffset
+		local offset = IconController.leftOffset + getOffsetForTopbarInset()
 		return offset
 	end,
 	getStartOffset = function()
@@ -111,9 +128,10 @@ alignmentDetails["right"] = {
 IconController.topbarEnabled = true
 IconController.controllerModeEnabled = false
 IconController.previousTopbarEnabled = checkTopbarEnabled()
-IconController.leftGap = 12
-IconController.midGap = 12
-IconController.rightGap = 12
+IconController.accountForMobile = true
+IconController.leftGap = 6
+IconController.midGap = 6
+IconController.rightGap = 6
 IconController.leftOffset = 0
 IconController.rightOffset = 0
 IconController.mimicCoreGui = true
@@ -252,12 +270,10 @@ end
 local requestedTopbarUpdate = false
 function IconController.updateTopbar()
 	local function getIncrement(otherIcon, alignment)
-		--local container = otherIcon.instances.iconContainer
-		--local sizeX = container.Size.X.Offset
 		local iconSize = otherIcon:get("iconSize", otherIcon:getIconState()) or UDim2.new(0, 32, 0, 32)
 		local sizeX = iconSize.X.Offset
 		local alignmentGap = IconController[alignment.."Gap"]
-		local iconWidthAndGap = (sizeX + alignmentGap)
+		local iconWidthAndGap = (sizeX + alignmentGap + getOffsetForTopbarInset())
 		local increment = iconWidthAndGap
 		local preOffset = 0
 		if otherIcon._parentIcon == nil then
@@ -276,45 +292,42 @@ function IconController.updateTopbar()
 		runService.Heartbeat:Wait()
 		topbarUpdating = false
 
-		for alignment, alignmentInfo in pairs(alignmentDetails) do
+		for _, alignmentInfo in alignmentDetails do
 			alignmentInfo.records = {}
 		end
 
-		for otherIcon, _ in pairs(topbarIcons) do
+		for otherIcon, _ in topbarIcons do
 			if IconController.canShowIconOnTopbar(otherIcon) then
 				local alignment = otherIcon:get("alignment")
 				table.insert(alignmentDetails[alignment].records, otherIcon)
 			end
 		end
 		local viewportSize = workspace.CurrentCamera.ViewportSize
-		for alignment, alignmentInfo in pairs(alignmentDetails) do
+
+		for alignment, alignmentInfo in alignmentDetails do
 			local records = alignmentInfo.records
 			if #records > 1 then
 				if alignmentInfo.reverseSort then
-					table.sort(records, function(a,b) return a:get("order") > b:get("order") end)
+					table.sort(records, function(a, b)
+						return a:get("order") > b:get("order")
+					end)
 				else
-					table.sort(records, function(a,b) return a:get("order") < b:get("order") end)
+					table.sort(records, function(a, b)
+						return a:get("order") < b:get("order")
+					end)
 				end
 			end
 			local totalIconX = 0
-			for i, otherIcon in pairs(records) do
+			for _, otherIcon in records do
 				local increment = getIncrement(otherIcon, alignment)
 				totalIconX = totalIconX + increment
 			end
 			local offsetX = alignmentInfo.getStartOffset(totalIconX, alignment)
-			local preOffsetX = offsetX
-			local containerX = TopbarPlusGui.TopbarContainer.AbsoluteSize.X
-			for i, otherIcon in pairs(records) do
-				local increment, preOffset = getIncrement(otherIcon, alignment)
-				local newAbsoluteX = alignmentInfo.startScale*containerX + preOffsetX+preOffset
-				preOffsetX = preOffsetX + increment
-			end
-			for i, otherIcon in pairs(records) do
+			for _, otherIcon in records do
 				local container = otherIcon.instances.iconContainer
 				local increment, preOffset = getIncrement(otherIcon, alignment)
 				local topPadding = otherIcon.topPadding
-				local newPositon = UDim2.new(alignmentInfo.startScale, offsetX+preOffset, topPadding.Scale, topPadding.Offset)
-				local isAnOverflowIcon = string.match(otherIcon.name, "_overflowIcon-")
+				local newPositon = UDim2.new(alignmentInfo.startScale, offsetX+preOffset, topPadding.Scale, topPadding.Offset + getOffsetForTopbarInset())
 				local repositionInfo = otherIcon:get("repositionInfo")
 				if repositionInfo then
 					tweenService:Create(container, repositionInfo, {Position = newPositon}):Play()
@@ -636,7 +649,7 @@ function IconController.setTopbarEnabled(bool, forceBool)
 end
 
 function IconController.setGap(value, alignment)
-	local newValue = tonumber(value) or 12
+	local newValue = tonumber(value) or 6
 	local newAlignment = tostring(alignment):lower()
 	if newAlignment == "left" or newAlignment == "mid" or newAlignment == "right" then
 		IconController[newAlignment.."Gap"] = newValue
@@ -659,7 +672,6 @@ function IconController.setRightOffset(value)
 	IconController.updateTopbar()
 end
 
-local localPlayer = players.LocalPlayer
 local iconsToClearOnSpawn = {}
 localPlayer.CharacterAdded:Connect(function()
 	for _, icon in pairs(iconsToClearOnSpawn) do
@@ -1110,6 +1122,7 @@ guiService.MenuOpened:Connect(function()
 end)
 
 bindCamera()
+bindTopBarInsetChanged()
 
 -- It's important we update all icons when a players language changes to account for changes in the width of text, etc
 task.spawn(function()

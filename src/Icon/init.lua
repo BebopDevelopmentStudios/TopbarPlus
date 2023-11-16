@@ -405,7 +405,7 @@ function Icon.new()
 	self.dropdownOpen = false
 	self.menuOpen = false
 	self.locked = false
-	self.topPadding = UDim.new(0, 12)
+	self.topPadding = UDim.new(0, 6)
 	self.targetPosition = nil
 	self.toggleItems = {}
 	self.lockedSettings = {}
@@ -1485,7 +1485,7 @@ function Icon:autoDeselect(bool)
 end
 
 function Icon:setTopPadding(offset, scale)
-	local newOffset = offset or 4
+	local newOffset = offset or 6
 	local newScale = scale or 0
 	self.topPadding = UDim.new(newScale, newOffset)
 	self.updated:Fire()

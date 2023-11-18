@@ -342,15 +342,17 @@ function IconController.updateTopbar()
 		-- OVERFLOW HANDLER
 		--------
 		local START_LEEWAY = 10 -- The additional offset where the end icon will be converted to ... without an apparant change in position
+		-- Gets the boundary X position of the icon, accounting for the provided side.
 		local function getBoundaryX(iconToCheck, side, gap)
 			local additionalGap = gap or 0
 			local currentSize = iconToCheck:get("iconSize", iconToCheck:getIconState())
 			local sizeX = currentSize.X.Offset
 			local extendLeft, extendRight = IconController.getMenuOffset(iconToCheck)
 			local boundaryXOffset = (side == "left" and (-additionalGap-extendLeft)) or (side == "right" and sizeX+additionalGap+extendRight)
-			local boundaryX = iconToCheck.targetPosition.X.Offset + boundaryXOffset
+			local boundaryX = iconToCheck.targetPosition.X.Offset + boundaryXOffset + guiService.TopbarInset.Min.X
 			return boundaryX
 		end
+		-- Gets the width of the icon, accounting for its left/right offset.
 		local function getSizeX(iconToCheck, usePrevious)
 			local currentSize, previousSize = iconToCheck:get("iconSize", iconToCheck:getIconState(), "beforeDropdown")
 			local hoveringSize = iconToCheck:get("iconSize", "hovering")
@@ -364,161 +366,177 @@ function IconController.updateTopbar()
 			return sizeX
 		end
 
-		for alignment, alignmentInfo in pairs(alignmentDetails) do
+		local function handleAlignment(alignment, alignmentInfo)
 			local overflowIcon = alignmentInfo.overflowIcon
-			if overflowIcon then
-				local alignmentGap = IconController[alignment.."Gap"]
-				local oppositeAlignment = (alignment == "left" and "right") or "left"
-				local oppositeAlignmentInfo = alignmentDetails[oppositeAlignment]
-				local oppositeOverflowIcon = IconController.getIcon("_overflowIcon-"..oppositeAlignment)
 
-				-- This determines whether any icons (from opposite or mid alignment) are overlapping with this alignment
-				local overflowBoundaryX = getBoundaryX(overflowIcon, alignment)
-				if overflowIcon.enabled then
-					overflowBoundaryX = getBoundaryX(overflowIcon, oppositeAlignment, alignmentGap)
-				end
-				local function doesExceed(givenBoundaryX)
-					local exceeds = (alignment == "left" and givenBoundaryX < overflowBoundaryX) or (alignment == "right" and givenBoundaryX > overflowBoundaryX)
-					return exceeds
-				end
-				local alignmentOffset = oppositeAlignmentInfo.getOffset()
-				if not overflowIcon.enabled then
-					alignmentOffset += START_LEEWAY
-				end
-				local alignmentBorderX = (alignment == "left" and viewportSize.X - alignmentOffset) or (alignment == "right" and alignmentOffset)
-				local closestBoundaryX = alignmentBorderX
-				local exceededCriticalBoundary = doesExceed(closestBoundaryX)
-				local function checkBoundaryExceeded(recordToCheck)
-					local totalIcons = #recordToCheck
-					for i = 1, totalIcons do
-						local endIcon = recordToCheck[totalIcons+1 - i]
-						if IconController.canShowIconOnTopbar(endIcon) then
-							local isAnOverflowIcon = string.match(endIcon.name, "_overflowIcon-")
-							if isAnOverflowIcon and totalIcons ~= 1 then
-								break
-							elseif isAnOverflowIcon and not endIcon.enabled then
-								continue
-							end
-							local additionalMyX = 0
-							if not overflowIcon.enabled then
-								additionalMyX = START_LEEWAY
-							end
-							local myBoundaryX = getBoundaryX(endIcon, alignment, additionalMyX)
-							local isNowClosest = (alignment == "left" and myBoundaryX < closestBoundaryX) or (alignment == "right" and myBoundaryX > closestBoundaryX)
-							if isNowClosest then
-								closestBoundaryX = myBoundaryX
-								if doesExceed(myBoundaryX) then
-									exceededCriticalBoundary = true
-								end
-							end
-						end
-					end
-				end
-				checkBoundaryExceeded(alignmentDetails[oppositeAlignment].records)
-				checkBoundaryExceeded(alignmentDetails.mid.records)
+			if not overflowIcon then
+				return
+			end
 
-				-- This determines which icons to give to the overflow if an overlap is present
-				if exceededCriticalBoundary then
-					local recordToCheck = alignmentInfo.records
-					local totalIcons = #recordToCheck
-					for i = 1, totalIcons do
-						local endIcon = (alignment == "left" and recordToCheck[totalIcons+1 - i]) or (alignment == "right" and recordToCheck[i])
-						if endIcon ~= overflowIcon and IconController.canShowIconOnTopbar(endIcon) then
-							local additionalGap = alignmentGap
-							local overflowIconSizeX = overflowIcon:get("iconSize", overflowIcon:getIconState()).X.Offset
-							if overflowIcon.enabled then
-								additionalGap += alignmentGap + overflowIconSizeX
-							end
-							local myBoundaryXPlusGap = getBoundaryX(endIcon, oppositeAlignment, additionalGap)
-							local exceeds = (alignment == "left" and myBoundaryXPlusGap >= closestBoundaryX) or (alignment == "right" and myBoundaryXPlusGap <= closestBoundaryX)
-							if exceeds then
-								if not overflowIcon.enabled then
-									local overflowContainer = overflowIcon.instances.iconContainer
-									local yPos = overflowContainer.Position.Y
-									local appearXAdditional = (alignment == "left" and -overflowContainer.Size.X.Offset) or 0
-									local appearX = getBoundaryX(endIcon, oppositeAlignment, appearXAdditional)
-									overflowContainer.Position = UDim2.new(0, appearX, yPos.Scale, yPos.Offset)
-									overflowIcon:setEnabled(true)
-								end
-								if #endIcon.dropdownIcons > 0 then
-									endIcon._overflowConvertedToMenu = true
-									local wasSelected = endIcon.isSelected
-									endIcon:deselect()
-									local iconsToConvert = {}
-									for _, dIcon in pairs(endIcon.dropdownIcons) do
-										table.insert(iconsToConvert, dIcon)
-									end
-									for _, dIcon in pairs(endIcon.dropdownIcons) do
-										dIcon:leave()
-									end
-									endIcon:setMenu(iconsToConvert)
-									if wasSelected and overflowIcon.isSelected then
-										endIcon:select()
-									end
-								end
-								if endIcon.hovering then
-									endIcon.wasHoveringBeforeOverflow = true
-								end
-								endIcon:join(overflowIcon, "dropdown")
-								if #endIcon.menuIcons > 0 and endIcon.menuOpen then
-									endIcon:deselect()
-									endIcon:select()
-									overflowIcon:select()
-								end
-							end
-							break
-						end
+			local alignmentGap = IconController[alignment.."Gap"]
+			local oppositeAlignment = (alignment == "left" and "right") or "left"
+			local oppositeAlignmentInfo = alignmentDetails[oppositeAlignment]
+			local oppositeOverflowIcon = IconController.getIcon("_overflowIcon-"..oppositeAlignment)
+
+			-- This determines whether any icons (from opposite or mid alignment) are overlapping with this alignment
+			local overflowBoundaryX = getBoundaryX(overflowIcon, alignment)
+			if overflowIcon.enabled then
+				overflowBoundaryX = getBoundaryX(overflowIcon, oppositeAlignment, alignmentGap)
+			end
+			local function doesExceed(givenBoundaryX)
+				local exceeds = (alignment == "left" and givenBoundaryX < overflowBoundaryX) or (alignment == "right" and givenBoundaryX > overflowBoundaryX)
+				return exceeds
+			end
+			local alignmentOffset = oppositeAlignmentInfo.getOffset()
+			if not overflowIcon.enabled then
+				alignmentOffset += START_LEEWAY
+			end
+			local alignmentBorderX = (alignment == "left" and viewportSize.X - alignmentOffset) or (alignment == "right" and alignmentOffset)
+			local closestBoundaryX = alignmentBorderX
+			local exceededCriticalBoundary = doesExceed(closestBoundaryX)
+			local function checkBoundaryExceeded(recordToCheck)
+				local totalIcons = #recordToCheck
+				for i = 1, totalIcons do
+					local endIcon = recordToCheck[totalIcons+1 - i]
+					if not IconController.canShowIconOnTopbar(endIcon) then
+						continue
 					end
 
-				else
-
-					-- This checks to see if the lowest/highest (depending on left/right) ordered overlapping icon is no longer overlapping, removes from the dropdown, and repeats if valid
-					local winningOrder, winningOverlappedIcon
-					local totalOverlappingIcons = #overflowIcon.dropdownIcons
-					if not (oppositeOverflowIcon and oppositeOverflowIcon.enabled and #alignmentInfo.records == 1 and #oppositeAlignmentInfo.records ~= 1) then
-						for _, overlappedIcon in pairs(overflowIcon.dropdownIcons) do
-							local iconOrder = overlappedIcon:get("order")
-							if winningOverlappedIcon == nil or (alignment == "left" and iconOrder < winningOrder) or (alignment == "right" and iconOrder > winningOrder) then
-								winningOrder = iconOrder
-								winningOverlappedIcon = overlappedIcon
-							end
+					local isAnOverflowIcon = string.match(endIcon.name, "_overflowIcon-")
+					if isAnOverflowIcon and totalIcons ~= 1 then
+						break
+					elseif isAnOverflowIcon and not endIcon.enabled then
+						continue
+					end
+					local additionalMyX = 0
+					if not overflowIcon.enabled then
+						additionalMyX = START_LEEWAY
+					end
+					local myBoundaryX = getBoundaryX(endIcon, alignment, additionalMyX)
+					local isNowClosest = (alignment == "left" and myBoundaryX < closestBoundaryX) or (alignment == "right" and myBoundaryX > closestBoundaryX)
+					if isNowClosest then
+						closestBoundaryX = myBoundaryX
+						if doesExceed(myBoundaryX) then
+							exceededCriticalBoundary = true
 						end
 					end
-					if winningOverlappedIcon then
-						local sizeX = getSizeX(winningOverlappedIcon, true)
-						local myForesightBoundaryX = getBoundaryX(overflowIcon, oppositeAlignment)
-						if totalOverlappingIcons == 1 then
-							myForesightBoundaryX = getBoundaryX(overflowIcon, alignment, alignmentGap-START_LEEWAY)
-						end
-						local availableGap = math.abs(closestBoundaryX - myForesightBoundaryX) - (alignmentGap*2)
-						local noLongerExeeds = (sizeX < availableGap)
-						if noLongerExeeds then
-							if #overflowIcon.dropdownIcons == 1 then
-								overflowIcon:setEnabled(false)
-							end
-							local overflowContainer = overflowIcon.instances.iconContainer
-							local yPos = overflowContainer.Position.Y
-							overflowContainer.Position = UDim2.new(0, myForesightBoundaryX, yPos.Scale, yPos.Offset)
-							winningOverlappedIcon:leave()
-							winningOverlappedIcon.wasHoveringBeforeOverflow = nil
-							--
-							if winningOverlappedIcon._overflowConvertedToMenu then
-								winningOverlappedIcon._overflowConvertedToMenu = nil
-								local iconsToConvert = {}
-								for _, dIcon in pairs(winningOverlappedIcon.menuIcons) do
-									table.insert(iconsToConvert, dIcon)
-								end
-								for _, dIcon in pairs(winningOverlappedIcon.menuIcons) do
-									dIcon:leave()
-								end
-								winningOverlappedIcon:setDropdown(iconsToConvert)
-							end
-							--
-						end
-					end
-
 				end
 			end
+			checkBoundaryExceeded(alignmentDetails[oppositeAlignment].records)
+			checkBoundaryExceeded(alignmentDetails.mid.records)
+
+			-- This determines which icons to give to the overflow if an overlap is present
+			if exceededCriticalBoundary then
+				local recordToCheck = alignmentInfo.records
+				local totalIcons = #recordToCheck
+				for i = 1, totalIcons do
+					local endIcon = (alignment == "left" and recordToCheck[totalIcons+1 - i]) or (alignment == "right" and recordToCheck[i])
+					if endIcon == overflowIcon or not IconController.canShowIconOnTopbar(endIcon) then
+						continue
+					end
+
+					local additionalGap = alignmentGap
+					local overflowIconSizeX = overflowIcon:get("iconSize", overflowIcon:getIconState()).X.Offset
+					if overflowIcon.enabled then
+						additionalGap += alignmentGap + overflowIconSizeX
+					end
+					local myBoundaryXPlusGap = getBoundaryX(endIcon, oppositeAlignment, additionalGap)
+					local exceeds = (alignment == "left" and myBoundaryXPlusGap >= closestBoundaryX) or (alignment == "right" and myBoundaryXPlusGap <= closestBoundaryX)
+					if not exceeds then
+						break
+					end
+
+					if not overflowIcon.enabled then
+						local overflowContainer = overflowIcon.instances.iconContainer
+						local yPos = overflowContainer.Position.Y
+						local appearXAdditional = (alignment == "left" and -overflowContainer.Size.X.Offset) or 0
+						local appearX = getBoundaryX(endIcon, oppositeAlignment, appearXAdditional)
+						overflowContainer.Position = UDim2.new(0, appearX, yPos.Scale, yPos.Offset)
+						overflowIcon:setEnabled(true)
+					end
+					if #endIcon.dropdownIcons > 0 then
+						endIcon._overflowConvertedToMenu = true
+						local wasSelected = endIcon.isSelected
+						endIcon:deselect()
+						local iconsToConvert = {}
+						for _, dIcon in pairs(endIcon.dropdownIcons) do
+							table.insert(iconsToConvert, dIcon)
+						end
+						for _, dIcon in pairs(endIcon.dropdownIcons) do
+							dIcon:leave()
+						end
+						endIcon:setMenu(iconsToConvert)
+						if wasSelected and overflowIcon.isSelected then
+							endIcon:select()
+						end
+					end
+					if endIcon.hovering then
+						endIcon.wasHoveringBeforeOverflow = true
+					end
+					endIcon:join(overflowIcon, "dropdown")
+					if #endIcon.menuIcons > 0 and endIcon.menuOpen then
+						endIcon:deselect()
+						endIcon:select()
+						overflowIcon:select()
+					end
+
+					break
+				end
+			else
+				-- This checks to see if the lowest/highest (depending on left/right) ordered overlapping icon is no longer overlapping, removes from the dropdown, and repeats if valid
+				local winningOrder, winningOverlappedIcon
+				local totalOverlappingIcons = #overflowIcon.dropdownIcons
+				if not (oppositeOverflowIcon and oppositeOverflowIcon.enabled and #alignmentInfo.records == 1 and #oppositeAlignmentInfo.records ~= 1) then
+					for _, overlappedIcon in pairs(overflowIcon.dropdownIcons) do
+						local iconOrder = overlappedIcon:get("order")
+						if winningOverlappedIcon == nil or (alignment == "left" and iconOrder < winningOrder) or (alignment == "right" and iconOrder > winningOrder) then
+							winningOrder = iconOrder
+							winningOverlappedIcon = overlappedIcon
+						end
+					end
+				end
+
+				if not winningOverlappedIcon then
+					return
+				end
+
+				local sizeX = getSizeX(winningOverlappedIcon, true)
+				local myForesightBoundaryX = getBoundaryX(overflowIcon, oppositeAlignment)
+				if totalOverlappingIcons == 1 then
+					myForesightBoundaryX = getBoundaryX(overflowIcon, alignment, alignmentGap-START_LEEWAY)
+				end
+				local availableGap = math.abs(closestBoundaryX - myForesightBoundaryX) - (alignmentGap*2)
+				local noLongerExeeds = (sizeX < availableGap)
+				if not noLongerExeeds then
+					return
+				end
+
+				if #overflowIcon.dropdownIcons == 1 then
+					overflowIcon:setEnabled(false)
+				end
+				local overflowContainer = overflowIcon.instances.iconContainer
+				local yPos = overflowContainer.Position.Y
+				overflowContainer.Position = UDim2.new(0, myForesightBoundaryX, yPos.Scale, yPos.Offset)
+				winningOverlappedIcon:leave()
+				winningOverlappedIcon.wasHoveringBeforeOverflow = nil
+				--
+				if winningOverlappedIcon._overflowConvertedToMenu then
+					winningOverlappedIcon._overflowConvertedToMenu = nil
+					local iconsToConvert = {}
+					for _, dIcon in pairs(winningOverlappedIcon.menuIcons) do
+						table.insert(iconsToConvert, dIcon)
+					end
+					for _, dIcon in pairs(winningOverlappedIcon.menuIcons) do
+						dIcon:leave()
+					end
+					winningOverlappedIcon:setDropdown(iconsToConvert)
+				end
+				--
+			end
+		end
+
+		for alignment, alignmentInfo in alignmentDetails do
+			handleAlignment(alignment, alignmentInfo)
 		end
 		--------
 		if requestedTopbarUpdate then

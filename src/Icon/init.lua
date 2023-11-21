@@ -1309,7 +1309,9 @@ function Icon:_getContentText(text)
 end
 
 function Icon:_updateIconSize(_, iconState)
-	if self._destroyed then return end
+	if self._destroyed or self._updatingIconSize then return end
+	self._updatingIconSize = true
+
 	-- This is responsible for handling the appearance and size of the icons label and image, in additon to its own size
 	local X_MARGIN = 12
 	local X_GAP = 8
@@ -1388,7 +1390,6 @@ function Icon:_updateIconSize(_, iconState)
 	end
 	if desiredCellWidth then
 		if not self._updatingIconSize then
-			self._updatingIconSize = true
 			local widthScale = (cellSizeXScale > 0 and cellSizeXScale) or 0
 			local widthOffset = (cellSizeXScale > 0 and 0) or math.clamp(desiredCellWidth, minCellWidth, maxCellWidth)
 			self:set("iconSize", UDim2.new(widthScale, widthOffset, values.iconSize.Y.Scale, values.iconSize.Y.Offset), iconState, "_ignorePrevious")
@@ -1407,7 +1408,6 @@ function Icon:_updateIconSize(_, iconState)
 				end
 			end
 
-			self._updatingIconSize = false
 		end
 	end
 	self:set("iconLabelTextSize", labelHeight, iconState)

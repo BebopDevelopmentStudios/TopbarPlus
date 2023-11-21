@@ -466,6 +466,7 @@ function IconController.updateTopbar()
 					break
 				end
 			else
+				-- if true then return end
 				-- if not workspace.handleOverflow.Value then return end
 				--Gets the width of the icon, accounting for its left/right offset.
 				local function getSizeX(iconToCheck, usePrevious)
@@ -503,7 +504,7 @@ function IconController.updateTopbar()
 				end
 
 				local newOverflowIconBoundaryX = getAbsoluteBoundaryX(overflowIcon, oppositeAlignment)
-				local availableSpace = math.abs(boundaryX - newOverflowIconBoundaryX) - (alignmentGap * 2) - 20
+				local availableSpace = math.abs(boundaryX - newOverflowIconBoundaryX) - (alignmentGap * 2)
 				local winningOverlappedIconSizeX = getSizeX(winningOverlappedIcon, true)
 
 				local noLongerExceeds = winningOverlappedIconSizeX < availableSpace

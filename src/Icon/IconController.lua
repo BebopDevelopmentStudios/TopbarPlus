@@ -105,7 +105,7 @@ alignmentDetails["mid"] = {
 alignmentDetails["right"] = {
 	startScale = 1,
 	getOffset = function()
-		local offset = IconController.rightOffset --+ getOffsetForTopbarInset()
+		local offset = IconController.rightOffset
 		return offset
 	end,
 	getStartOffset = function(totalIconX)
@@ -113,7 +113,6 @@ alignmentDetails["right"] = {
 		return startOffset
 	end,
 	records = {}
-	--reverseSort = true
 }
 
 
@@ -334,7 +333,6 @@ function IconController.updateTopbar()
 				end
 				offsetX = offsetX + increment
 				otherIcon.targetPosition = UDim2.new(0, (newPositon.X.Scale*topbarSize) + newPositon.X.Offset, 0, (newPositon.Y.Scale*viewportSize.Y) + newPositon.Y.Offset)
-				-- print(otherIcon.name, otherIcon.targetPosition.X.Offset)
 			end
 		end
 
@@ -348,7 +346,7 @@ function IconController.updateTopbar()
 			local sizeX = currentSize.X.Offset
 			local extendLeft, extendRight = IconController.getMenuOffset(iconToCheck)
 			local boundaryXOffset = (side == "left" and (-additionalGap - extendLeft)) or (side == "right" and sizeX + additionalGap + extendRight)
-			local boundaryX = iconToCheck.targetPosition.X.Offset + boundaryXOffset + (topbarStart)
+			local boundaryX = iconToCheck.targetPosition.X.Offset + boundaryXOffset + topbarStart
 			return boundaryX
 		end
 
@@ -362,7 +360,6 @@ function IconController.updateTopbar()
 			end
 
 			local exceededCriticalBoundary = false
-
 			local overflowIconBoundaryX = getAbsoluteBoundaryX(overflowIcon, alignment)
 
 			if overflowIcon.enabled then
@@ -374,7 +371,6 @@ function IconController.updateTopbar()
 					or (alignment == "right" and overflowIconBoundaryX < boundary)
 			end
 
-			-- TODO: what about middle?
 			local boundaryX = alignment == "left" and topbarStart + topbarSize or topbarStart
 			exceededCriticalBoundary = checkExceeds(boundaryX)
 
@@ -398,13 +394,11 @@ function IconController.updateTopbar()
 						additionalMyX = START_LEEWAY
 					end
 					local endIconBoundaryX = getAbsoluteBoundaryX(endIcon, alignment, additionalMyX)
-					-- local isNowClosest = (alignment == "left" and endIconBoundaryX < boundaryX) or (alignment == "right" and endIconBoundaryX > boundaryX)
 					local isNowClosest = (alignment == "left" and endIconBoundaryX < boundaryX) or (alignment == "right" and boundaryX < endIconBoundaryX)
 
 					if not isNowClosest then
 						continue
 					end
-					-- boundaryX = endIconBoundaryX
 					boundaryX = endIconBoundaryX
 					if checkExceeds(endIconBoundaryX) then
 						exceededCriticalBoundary = true
@@ -440,7 +434,7 @@ function IconController.updateTopbar()
 						local yPos = overflowContainer.Position.Y
 						local appearXAdditional = (alignment == "left" and -overflowContainer.Size.X.Offset) or 0
 						local appearX = getAbsoluteBoundaryX(endIcon, oppositeAlignment, appearXAdditional)
-						overflowContainer.Position = UDim2.new(0, appearX, yPos.Scale, yPos.Offset)
+						overflowContainer.Position = UDim2.new(0, appearX - topbarStart, yPos.Scale, yPos.Offset)
 						overflowIcon:setEnabled(true)
 					end
 					if #endIcon.dropdownIcons > 0 then
@@ -505,23 +499,13 @@ function IconController.updateTopbar()
 				end
 
 				if not winningOverlappedIcon then
-					-- print(alignment, "no winning overlapped icon")
 					return
 				end
 
-
-
 				local newOverflowIconBoundaryX = getAbsoluteBoundaryX(overflowIcon, oppositeAlignment)
-				local availableSpace = math.abs(boundaryX - newOverflowIconBoundaryX) - (alignmentGap * 2)
-
+				local availableSpace = math.abs(boundaryX - newOverflowIconBoundaryX) - (alignmentGap * 2) - 20
 				local winningOverlappedIconSizeX = getSizeX(winningOverlappedIcon, true)
 
-				-- if winningOverlappedIconSizeX < 1 then
-				-- 	-- print(alignment, "winningOverlappedIconSizeX == 0")
-				-- 	return
-				-- end
-
-				-- print(winningOverlappedIcon.name, winningOverlappedIconSizeX, availableSpace)
 				local noLongerExceeds = winningOverlappedIconSizeX < availableSpace
 				if not noLongerExceeds then
 					return
@@ -536,7 +520,6 @@ function IconController.updateTopbar()
 				winningOverlappedIcon:leave()
 				winningOverlappedIcon.wasHoveringBeforeOverflow = nil
 
-				-- print(winningOverlappedIcon.name, winningOverlappedIcon._overflowConvertedToMenu)
 				if winningOverlappedIcon._overflowConvertedToMenu then
 					winningOverlappedIcon._overflowConvertedToMenu = nil
 					local iconsToConvert = {}
@@ -560,6 +543,7 @@ function IconController.updateTopbar()
 			requestedTopbarUpdate = false
 			IconController.updateTopbar()
 		end
+
 		return true
 	end)
 	return true

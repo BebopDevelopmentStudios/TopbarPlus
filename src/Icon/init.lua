@@ -1,5 +1,4 @@
 -- LOCAL
-local LocalizationService = game:GetService("LocalizationService")
 local tweenService = game:GetService("TweenService")
 local debris = game:GetService("Debris")
 local userInputService = game:GetService("UserInputService")
@@ -8,10 +7,7 @@ local runService = game:GetService("RunService")
 local textService = game:GetService("TextService")
 local starterGui = game:GetService("StarterGui")
 local guiService = game:GetService("GuiService")
-local localizationService = game:GetService("LocalizationService")
-local playersService = game:GetService("Players")
 
-local localPlayer = playersService.LocalPlayer
 local iconModule = script
 
 local IconController = require(iconModule.IconController)
@@ -39,10 +35,6 @@ for _,s in ipairs(script:GetChildren()) do
     Icon[s.Name] = s
 end
 
-function Icon.setVoiceChatEnabled(bool: boolean)
-	IconController.voiceChatEnabled = bool
-end
-
 Icon.__index = Icon
 local activeItems = TopbarPlusGui.ActiveItems
 local topbarContainer = TopbarPlusGui.TopbarContainer
@@ -54,7 +46,7 @@ local DEFAULT_FORCED_GROUP_VALUES = {}
 
 
 -- CONSTRUCTORS
-function Icon.new()	
+function Icon.new()
 	local self = {}
 	setmetatable(self, Icon)
 
@@ -247,7 +239,7 @@ function Icon.new()
 				isDeselected = not self.dropdownOpen
 			end
 			local isSpecialPressing = self._longPressing or self._rightClicking
-			if self._tappingAway or (isDeselected and not isSpecialPressing) or (isSpecialPressing and self.dropdownOpen) then 
+			if self._tappingAway or (isDeselected and not isSpecialPressing) or (isSpecialPressing and self.dropdownOpen) then
 				local dropdownSize = self:get("dropdownSize")
 				local XOffset = (dropdownSize and dropdownSize.X.Offset/1) or 0
 				newValue = UDim2.new(0, XOffset, 0, 0)
@@ -275,9 +267,7 @@ function Icon.new()
 				--dropdownContainer.ClipsDescendants = not self.dropdownOpen
 			end)
 			tween:Play()
-			if isOpen then
-				--dropdownFrame.CanvasPosition = self._dropdownCanvasPos
-			else
+			if not isOpen then
 				self._dropdownCanvasPos = dropdownFrame.CanvasPosition
 			end
 			dropdownFrame.ScrollingEnabled = isOpen -- It's important scrolling is only enabled when the dropdown is visible otherwise it could block the scrolling behaviour of other icons
@@ -296,7 +286,7 @@ function Icon.new()
 				isDeselected = not self.menuOpen
 			end
 			local isSpecialPressing = self._longPressing or self._rightClicking
-			if self._tappingAway or (isDeselected and not isSpecialPressing) or (isSpecialPressing and self.menuOpen) then 
+			if self._tappingAway or (isDeselected and not isSpecialPressing) or (isSpecialPressing and self.menuOpen) then
 				local menuSize = self:get("menuSize")
 				local YOffset = (menuSize and menuSize.Y.Offset/1) or 0
 				newValue = UDim2.new(0, 0, 0, YOffset)
@@ -312,7 +302,6 @@ function Icon.new()
 			local connection
 			connection = tween.Completed:Connect(function()
 				connection:Disconnect()
-				--menuContainer.ClipsDescendants = not self.menuOpen
 			end)
 			tween:Play()
 			if isOpen then
@@ -348,10 +337,9 @@ function Icon.new()
 				self._uniqueSettings[uniqueCat] = uniqueCatArray
 				self._uniqueSettingsDictionary[settingName] = uniqueBehaviours[uniqueCat]
 			end
-			--
 		end
 	end
-	
+
 	-- Signals (events)
 	self.updated = maid:give(Signal.new())
 	self.selected = maid:give(Signal.new())
@@ -369,7 +357,7 @@ function Icon.new()
 	self.notified = maid:give(Signal.new())
 	self._endNotices = maid:give(Signal.new())
 	self._ignoreClippingChanged = maid:give(Signal.new())
-	
+
 	-- Connections
 	-- This enables us to chain icons and features like menus and dropdowns together without them being hidden by parent frame with ClipsDescendants enabled
 	local function setFeatureChange(featureName, value)
@@ -417,13 +405,13 @@ function Icon.new()
 	self.dropdownOpen = false
 	self.menuOpen = false
 	self.locked = false
-	self.topPadding = UDim.new(0, 4)
+	self.topPadding = UDim.new(0, 6)
 	self.targetPosition = nil
 	self.toggleItems = {}
 	self.lockedSettings = {}
 	self.UID = httpService:GenerateGUID(true)
 	self.blockBackBehaviourChecks = {}
-	
+
 	-- Private Properties
 	self._draggingFinger = false
 	self._updatingIconSize = true
@@ -431,7 +419,7 @@ function Icon.new()
 	self._previousMenuOpen = false
 	self._bindedToggleKeys = {}
 	self._bindedEvents = {}
-	
+
 	-- Apply start values
 	self:setName("UnnamedIcon")
 	self:setTheme(DEFAULT_THEME, true)
@@ -513,7 +501,7 @@ function Icon.new()
 		end
 		--
 	end)
-	
+
 	-- hoverStarted and hoverEnded triggers and actions
 	-- these are triggered when a mouse enters/leaves the icon with a mouse, is highlighted with
 	-- a controller selection box, or dragged over with a touchpad
@@ -594,7 +582,7 @@ function Icon.new()
 	self._updatingIconSize = false
 	self:_updateIconSize()
 	IconController.iconAdded:Fire(self)
-	
+
 	return self
 end
 
@@ -614,7 +602,7 @@ function Icon.mimic(coreIconToMimic)
 		icon:setImage("rbxasset://textures/ui/TopBar/chatOn.png", "selected")
 		icon:setImageYScale(0.625)
 		-- Since roblox's core gui api sucks melons I reverted to listening for signals within the chat modules
-		-- unfortunately however they've just gone and removed *these* signals therefore 
+		-- unfortunately however they've just gone and removed *these* signals therefore
 		-- this mimic chat and similar features are now impossible to recreate accurately, so I'm disabling for now
 		-- ill go ahead and post a feature request; fingers crossed we get something by the next decade
 
@@ -781,7 +769,7 @@ function Icon:set(settingName, value, iconState, setAdditional)
 			callMethod(self, value, iconState)
 		end
 	end
-	
+
 	-- Call any signals present
 	if settingDetail.callSignals then
 		for _, callSignal in pairs(settingDetail.callSignals) do
@@ -828,7 +816,7 @@ function Icon:get(settingName, iconState, getAdditional)
 		if valueToReturn == nil then
 			valueToReturn = settingDetail.values[toggleState]
 		end
-	
+
 	else
 		if additionalValueToReturn == nil then
 			additionalValueToReturn = type(getAdditional) == "string" and settingDetail.additionalValues[getAdditional]
@@ -1133,7 +1121,7 @@ function Icon:notify(clearNoticeEvent, noticeId)
 		if self._parentIcon then
 			self._parentIcon:notify(clearNoticeEvent)
 		end
-		
+
 		local notifComplete = Signal.new()
 		local endEvent = self._endNotices:Connect(function()
 			notifComplete:Fire()
@@ -1141,7 +1129,7 @@ function Icon:notify(clearNoticeEvent, noticeId)
 		local customEvent = clearNoticeEvent:Connect(function()
 			notifComplete:Fire()
 		end)
-		
+
 		noticeId = noticeId or httpService:GenerateGUID(true)
 		self.notices[noticeId] = {
 			completeSignal = notifComplete,
@@ -1152,11 +1140,11 @@ function Icon:notify(clearNoticeEvent, noticeId)
 
 		self.notified:Fire(noticeId)
 		notifComplete:Wait()
-		
+
 		endEvent:Disconnect()
 		customEvent:Disconnect()
 		notifComplete:Disconnect()
-		
+
 		self.totalNotices -= 1
 		self.notices[noticeId] = nil
 		self:_updateNotice()
@@ -1256,7 +1244,7 @@ function Icon:setLabelYScale(YScale, iconState)
 	local newYScale = tonumber(YScale) or 0.45
 	return self:set("iconLabelYScale", newYScale, iconState)
 end
-	
+
 function Icon:setBaseZIndex(ZIndex, iconState)
 	local newBaseZIndex = tonumber(ZIndex) or 1
 	return self:set("baseZIndex", newBaseZIndex, iconState)
@@ -1321,7 +1309,9 @@ function Icon:_getContentText(text)
 end
 
 function Icon:_updateIconSize(_, iconState)
-	if self._destroyed then return end
+	if self._destroyed or self._updatingIconSize then return end
+	self._updatingIconSize = true
+
 	-- This is responsible for handling the appearance and size of the icons label and image, in additon to its own size
 	local X_MARGIN = 12
 	local X_GAP = 8
@@ -1359,13 +1349,13 @@ function Icon:_updateIconSize(_, iconState)
 	local iconContentText = self:_getContentText(values.iconText)
 	local labelWidth = textService:GetTextSize(iconContentText, labelHeight, values.iconFont, Vector2.new(10000, labelHeight)).X
 	local imageWidth = cellHeight * values.iconImageYScale * values.iconImageRatio
-	
+
 	local usingImage = values.iconImage ~= ""
 	local usingText = values.iconText ~= ""
 	local notifPosYScale = 0.5
 	local desiredCellWidth
 	local preventClippingOffset = labelHeight/2
-	
+
 	if usingImage and not usingText then
 		desiredCellWidth = 0
 		notifPosYScale = 0.45
@@ -1400,7 +1390,6 @@ function Icon:_updateIconSize(_, iconState)
 	end
 	if desiredCellWidth then
 		if not self._updatingIconSize then
-			self._updatingIconSize = true
 			local widthScale = (cellSizeXScale > 0 and cellSizeXScale) or 0
 			local widthOffset = (cellSizeXScale > 0 and 0) or math.clamp(desiredCellWidth, minCellWidth, maxCellWidth)
 			self:set("iconSize", UDim2.new(widthScale, widthOffset, values.iconSize.Y.Scale, values.iconSize.Y.Offset), iconState, "_ignorePrevious")
@@ -1419,7 +1408,6 @@ function Icon:_updateIconSize(_, iconState)
 				end
 			end
 
-			self._updatingIconSize = false
 		end
 	end
 	self:set("iconLabelTextSize", labelHeight, iconState)
@@ -1497,7 +1485,7 @@ function Icon:autoDeselect(bool)
 end
 
 function Icon:setTopPadding(offset, scale)
-	local newOffset = offset or 4
+	local newOffset = offset or 6
 	local newScale = scale or 0
 	self.topPadding = UDim.new(newScale, newOffset)
 	self.updated:Fire()
@@ -1585,7 +1573,7 @@ function Icon:setTip(text)
 	self.instances.tipFrame.Parent = (isVisible and activeItems) or self.instances.iconContainer
 	self._maid.tipFrame = self.instances.tipFrame
 	self:_updateTipSize()
-	
+
 	local tipMaid = Maid.new()
 	self._maid.tipMaid = tipMaid
 	if isVisible then
@@ -1631,11 +1619,12 @@ function Icon:displayTip(bool)
 		-- When the user moves their cursor/finger, update tip to match the position
 		local function updateTipPositon(x, y)
 			local newX = x
+			local guiInset = guiService.TopbarInset
+			newX = newX - guiInset.Min.X
 			local newY = y
 			local camera = workspace.CurrentCamera
 			local viewportSize = camera and camera.ViewportSize
 			if userInputService.TouchEnabled then
-				--tipFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 				local desiredX = newX - tipFrame.Size.X.Offset/2
 				local minX = 0
 				local maxX = viewportSize.X - tipFrame.Size.X.Offset
@@ -1659,11 +1648,7 @@ function Icon:displayTip(bool)
 				newX = math.clamp(desiredX, minX, maxX)
 				newY = math.clamp(desiredY, minY, maxY)
 			end
-			--local difX = tipFrame.AbsolutePosition.X - tipFrame.Position.X.Offset
-			--local difY = tipFrame.AbsolutePosition.Y - tipFrame.Position.Y.Offset
-			--local globalX = newX - difX
-			--local globalY = newY - difY
-			--tipFrame.Position = UDim2.new(0, globalX, 0, globalY-55)
+
 			tipFrame.Position = UDim2.new(0, newX, 0, newY-20)
 		end
 		local cursorLocation = userInputService:GetMouseLocation()
@@ -1759,14 +1744,14 @@ end
 function Icon:displayCaption(bool)
 	if userInputService.TouchEnabled and not self._draggingFinger then return end
 	local yOffset = 8
-	
+
 	-- Determine caption position
 	if self._draggingFinger then
 		yOffset = yOffset + THUMB_OFFSET
 	end
 	local iconContainer = self.instances.iconContainer
 	local captionContainer = self.instances.captionContainer
-	local newPos = UDim2.new(0, iconContainer.AbsolutePosition.X+iconContainer.AbsoluteSize.X/2-captionContainer.AbsoluteSize.X/2, 0, iconContainer.AbsolutePosition.Y+(iconContainer.AbsoluteSize.Y*2)+yOffset)
+	local newPos = UDim2.new(0, iconContainer.Position.X.Offset+iconContainer.AbsoluteSize.X/2-captionContainer.AbsoluteSize.X/2, 0, iconContainer.Position.Y.Offset+(iconContainer.AbsoluteSize.Y)+yOffset)
 	captionContainer.Position = newPos
 
 	-- Determine caption visibility
@@ -1801,7 +1786,7 @@ function Icon:join(parentIcon, featureName, dontUpdate)
 		parentIcon:notify(noticeDetail.clearNoticeEvent, noticeId)
 		--parentIcon:notify(noticeDetail.completeSignal, noticeId)
 	end
-	
+
 	if featureName == "dropdown" then
 		local squareCorners = parentIcon:get("dropdownSquareCorners")
 		self:set("iconSize", UDim2.new(1, 0, 0, self:get("iconSize", "deselected").Y.Offset), "deselected", beforeName)
@@ -1967,7 +1952,7 @@ function Icon:_updateDropdown()
 		scrollBarThickness = self:get("dropdownScrollBarThickness") or "_NIL",
 	}
 	for k, v in pairs(values) do if v == "_NIL" then return end end
-	
+
 	local YPadding = values.padding.Offset
 	local dropdownContainer = self.instances.dropdownContainer
 	local dropdownFrame = self.instances.dropdownFrame
@@ -2066,7 +2051,7 @@ function Icon:_getMenuDirection()
 	local direction = (self:get("menuDirection") or "_NIL"):lower()
 	local alignment = (self:get("alignment") or "_NIL"):lower()
 	if direction ~= "left" and direction ~= "right" then
-		direction = (alignment == "left" and "right") or "left" 
+		direction = (alignment == "left" and "right") or "left"
 	end
 	return direction
 end
@@ -2079,7 +2064,7 @@ function Icon:_updateMenu()
 		scrollBarThickness = self:get("menuScrollBarThickness") or "_NIL",
 	}
 	for k, v in pairs(values) do if v == "_NIL" then return end end
-	
+
 	local XPadding = IconController[values.iconAlignment.."Gap"]--12
 	local menuContainer = self.instances.menuContainer
 	local menuFrame = self.instances.menuFrame
